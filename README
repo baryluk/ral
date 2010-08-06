@@ -1,46 +1,49 @@
 % Random access list.
 
 % O(1)
-List = ral:empty(). % it is just [], and will be, you can use it in pattern matching
+RAList = ral:empty(). % it is just [], and will be, you can use it in pattern matching
 
 % O(1)
-NewList = ral:cons(something, List).
+NewRAList = ral:cons(something, RAList).
 
 % O(1)
-something = ral:head(NewList).
+something = ral:head(NewRAList).
 
 % O(n)
-List2 = ral:from_list([b,c,d,e,f,g,h,i,j]).
+RAList2 = ral:from_list([b,c,d,e,f,g,h,i,j]).
 
 % O(log n) - worst case
-e = ral:nth(4, List2).
+e = ral:nth(4, RAList2).
 
 % O(log n) - worst case
-List3 = ral:nthtail(4, List2).
-[f,g,h,i,j] = ral:to_list(List3).
+RAList3 = ral:nthtail(4, RAList2).
+[f,g,h,i,j] = ral:to_list(RAList3).
 
 
 % O(log_2 n)
-9 = ral:length(List2).
+9 = ral:length(RAList2).
 
 % O(1)
-true = ral:is_empty(List).
-false = ral:is_empty(NewList).
+true = ral:is_empty(RAList).
+false = ral:is_empty(NewRAList).
 
 % O(1)
-List4 = ral:cons(a, List2).
+RAList4 = ral:cons(a, RAList2).
 
 % O(n) + O(2 * log_2 n) of additional stack space
-[a,b,c,d,e,f,g,h,i,j] = ral:to_list(List4).
+[a,b,c,d,e,f,g,h,i,j] = ral:to_list(RAList4).
 
 
 % O(2 * log_2 n)
-j = ral:last(List4).
+j = ral:last(RAList4).
 
 % O(n)
 % ral:foldl/3, ral:foldr/3, ral:map/2, ral:foreach/2, ral:mapfoldl/3, ral:mapfoldl/3, ral:dropwhile/2
+% all similar like functions in lists:*
 % Note: foldr should be more effective than lists:foldl (will only use O(log n) additional stack space)
 
+% O(n)
+RAList6 =  ral:from_list([44,12,16,1,6,6,1,7,9,22,41,5,31]).
+{stop, {9,102}} = ral:foldl_cancelable(fun(Elem, {Pos,Acc}) -> if Acc > 100 -> {stop, {Pos,Acc}}; true -> {next, {Pos+1,Elem+Acc}} end end, {0,0}, RAList6).
 
 % there is no filter/2, min/1, max/1, and other function which are not more efficient than just foldl
-
