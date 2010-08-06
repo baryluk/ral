@@ -6,8 +6,10 @@
 
 -export([empty/0, is_empty/1, head/1, nth/2, tail/1, cons/2, length/1, from_list/1]).
 -export([to_list/1, nthtail/2]).
+-export([to_list_reversed/1, from_list_reversed/1]).
 -export([last/1, foldl/3, foldr/3, map/2, foreach/2, mapfoldl/3, mapfoldr/3, dropwhile/2]).
 -export([foldl_cancelable/3]).
+-export([reverse_list/2]).
 
 -compile({no_auto_import, [length/1]}).
 
@@ -188,9 +190,18 @@ from_list(NormalList) ->
 		cons(V, RAL)
 	end, empty(), lists:reverse(NormalList)).
 
-% O(n) 
+from_list_reversed(NormalList) ->
+	lists:foldl(fun(V, RAL) ->
+		cons(V, RAL)
+	end, empty(), NormalList).
+
+% O(n)
 to_list(RAL) ->
 	foldr(fun(E, Acc) -> [E|Acc] end, [], RAL).
+
+% O(n)
+to_list_reversed(RAL) ->
+	foldl(fun(E, Acc) -> [E|Acc] end, [], RAL).
 
 -ifdef(TEST).
 to_list_test_() ->
@@ -472,3 +483,8 @@ dropwhile_test_() ->
 	general_testing2(F0).
 -endif.
 
+
+reverse_list([H|T], RAL) ->
+	reverse_list(T, cons(H, RAL));
+reverse_list([], RAL) ->
+	RAL.
