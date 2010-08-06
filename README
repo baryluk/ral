@@ -1,5 +1,21 @@
 % Random access list.
 
+
+% Random access lists (ral) is a functional (immutable) data
+% structure which are better both from normal lists, and from balanced binary search trees.
+
+
+% Operation    RAL      List   BST
+%  head        O(1)     O(1)   O(log n)
+%  tail        O(1)     O(1)   O(log n)
+%  cons        O(1)     O(1)   O(log n)
+%  nth         O(log n) O(n)   O(log n)
+%  nthtail     O(log n) O(n)   O(log n)
+%
+% in some situations nth or nthtail can be faster in RAL. O(log n) is worst case complexity.
+% for some values it is faster.
+
+
 % O(1)
 RAList = ral:empty(). % it is just [], and will be, you can use it in pattern matching
 
@@ -47,3 +63,37 @@ RAList6 =  ral:from_list([44,12,16,1,6,6,1,7,9,22,41,5,31]).
 {stop, {9,102}} = ral:foldl_cancelable(fun(Elem, {Pos,Acc}) -> if Acc > 100 -> {stop, {Pos,Acc}}; true -> {next, {Pos+1,Elem+Acc}} end end, {0,0}, RAList6).
 
 % there is no filter/2, min/1, max/1, and other function which are not more efficient than just foldl
+
+
+% Internals:
+
+% let lists:reverse([a,b,c,d,e,f,g]) be a list
+% let convert it to ral element by element:
+%
+% empty       []
+% 1 elements  [{1, {a}}]            % one binary tree with 1 element
+% 2 elements  [{1, {b}}, {1, {a}}]  % two same-size trees
+% 3 elements  [{3, {c, {b}, {a}}}]  % one (complete) binary tree with 3 elements
+% 4 elements  [{1, {d}},
+%              {3, {c, {b}, {a}}}] 
+% 5 elements  [{1, {e}}, {1, {d}},
+%              {3, {c, {b}, {a}}}]
+% 6 elements  [{3, {f, {e}, {d}}},
+%              {3, {c, {b}, {a}}}]]
+% 7 elements  [{7, {g, {f, {e}, {d}}, {c, {b}, {a}}}}]
+% ...
+% ...
+% - constructed trees are always complete binary trees,
+% - they have sizes 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, ...
+% - they are placed in growing size in the list
+% - There can be at most one tree of each size, with the exception of
+%   that the first 2, which can be of the same size (like in 6-element or 2-element case above)
+%
+% - there is some overhead (so use it only for big lists, and when values are bigger than just numer), but it is better than this:
+%        [{7, {g, {f, {e, nil, nil}, {d, nil, nil}}, {c, {b, nil, nil}, {a, nil, nil}}}}]
+%      - we just have speciall case for leaf's as single element tuples
+%      - TODO: in the future it could be even changed to
+%        [{7, {g, {f, e, d}, {c, b, a}}}]
+%        becuase we know what is the height of tree
+%
+% for more information look at http://pl.wikipedia.org/wiki/Skośny_system_dwójkowy  (in polish)
