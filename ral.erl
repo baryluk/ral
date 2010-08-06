@@ -1,6 +1,9 @@
 -module(ral).
 -author('baryluk@smp.if.uj.edu.pl').
 
+% Copyright: Witold Baryluk, 2010
+% License: BSD
+
 -export([empty/0, is_empty/1, head/1, nth/2, tail/1, cons/2, length/1, from_list/1]).
 -export([to_list/1, nthtail/2]).
 -export([last/1, foldl/3, foldr/3, map/2, foreach/2, mapfoldl/3, mapfoldr/3, dropwhile/2]).

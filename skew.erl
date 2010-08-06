@@ -1,6 +1,11 @@
 -module(skew).
 -author('baryluk@smp.if.uj.edu.pl').
 
+% Copyright: Witold Baryluk, 2010
+% License: BSD
+
+% This is just a small module to show you how skew number works.
+
 -export([zero/0, inc/1, to_number/1, to_number2/1, to_display/1, first/1]).
 -export([a_zero/0, a_inc/1, a_number/1]).
 
