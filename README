@@ -206,7 +206,8 @@ element(1, timer:tc(ral, foldr, [fun(X,Acc) -> Acc+2*X end, 0, RAL])).
 % - There can be at most one tree of each size, with the exception of
 %   that the first 2, which can be of the same size (like in 6-element or 2-element case above)
 %
-% - there is some overhead (so use it only for big lists, and when values are bigger than just numer), but it is better than this:
+% - there is some overhead (so use it only for big lists, and when values are bigger
+%   than just numer), but it is better than this:
 %        [{7, {g, {f, {e, nil, nil}, {d, nil, nil}}, {c, {b, nil, nil}, {a, nil, nil}}}}]
 %      - we just have speciall case for leaf's as single element tuples
 %      - TODO: in the future it could be even changed to
