@@ -53,7 +53,7 @@ general_testing2(F0) when is_function(F0, 3) ->
 	lists:map(fun(NL) ->
 			RAL = from_list(NL),
 			F = fun(Y) -> F0(RAL, NL, Y) end,
-			[ ?_test(F(T)) || T <- [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 20, 35, 46, 123, 9999] ]
+			[ ?_test(F(T)) || T <- [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 20, 35, 46, 123, 9999] ]
 		end,
 		NLs).
 -endif.
@@ -131,6 +131,20 @@ lookup_tree({_, Left, Right}, N, Size) ->
 	end;
 lookup_tree({V}, 0, _Size) ->
 	V.
+
+
+
+-ifdef(TEST).
+nth_test_() ->
+	F0 = fun(RAL, NL, Y) ->
+		L2 = try nth(Y, RAL) catch _:_ -> exception end,
+		NL2 = try lists:nth(Y, NL) catch _:_ -> exception end,
+		?assert(L2 =:= NL2),
+		ok
+	end,
+	general_testing2(F0).
+-endif.
+
 
 tail([{Size, {_V, Left, Right}} | Rest]) ->
 	[{Size div 2, Left}, {Size div 2, Right} | Rest];
