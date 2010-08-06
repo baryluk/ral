@@ -104,6 +104,15 @@ RAList8 = ral:reverse_list([x,y,z], RAList4).
 [z,y,x,a,b,c,d,e,f,g,h,i,j] = ral:to_list(RAList8).
 
 
+% replaceing element in ral is also O(log n), so it is provided
+% ral:replace/3 have time complexity O(log n)
+[a,b,c,d,e,f,g,h,i,j] = ral:to_list(RAList4).
+[a,b,c,d,x,f,g,h,i,j] = ral:to_list(ral:replace(5, x, RAList4)).
+[x,b,c,d,e,f,g,h,i,j] = ral:to_list(ral:replace(1, x, RAList4)).
+[a,b,c,d,e,f,g,h,i,x] = ral:to_list(ral:replace(10, x, RAList4)).
+
+
+
 %%%%%% Benchmarks:
 
 

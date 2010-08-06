@@ -10,6 +10,7 @@
 -export([last/1, foldl/3, foldr/3, map/2, foreach/2, mapfoldl/3, mapfoldr/3, dropwhile/2]).
 -export([foldl_cancelable/3]).
 -export([reverse_list/2]).
+-export([replace/3]).
 
 -compile({no_auto_import, [length/1]}).
 
@@ -110,6 +111,7 @@ head_test_() ->
 -endif.
 
 
+% O(log n)
 nth(N, RAL) when N > 0 ->
 	nth_(N-1, RAL).
 
@@ -121,10 +123,11 @@ nth_(N, [{Size, _Tree} | Rest]) ->
 lookup_tree({V, _Left, _Right}, 0, _Size) ->
 	V;
 lookup_tree({_, Left, Right}, N, Size) ->
-	LorR = (N =< Size div 2),
+	SubSize = Size div 2,
+	LorR = (N =< SubSize),
 	if
-		LorR -> lookup_tree(Left, N - 1, Size div 2);
-		true -> lookup_tree(Right, N - 1 - (Size div 2), Size div 2)
+		LorR -> lookup_tree(Left, N - 1, SubSize);
+		true -> lookup_tree(Right, N - 1 - SubSize, SubSize)
 	end;
 lookup_tree({V}, 0, _Size) ->
 	V.
@@ -488,3 +491,51 @@ reverse_list([H|T], RAL) ->
 	reverse_list(T, cons(H, RAL));
 reverse_list([], RAL) ->
 	RAL.
+
+-ifdef(TEST).
+sample_list() ->
+	from_list([a,b,c,d,e,f,g,h,i,j]).
+
+reverse_list_test_() ->
+	RAList4 = sample_list(),
+	[
+		?t([a,b,c,d,e,f,g,h,i,j] =:= to_list(reverse_list([], RAList4))),
+		?t([x,a,b,c,d,e,f,g,h,i,j] =:= to_list(reverse_list([x], RAList4))),
+		?t([z,y,x,a,b,c,d,e,f,g,h,i,j] =:= to_list(reverse_list([x,y,z], RAList4)))
+	].
+-endif.
+
+
+% like nth/2, just add 3,4-rd parameter for new value, and return new trees, instad of value
+
+% O(log n)
+replace(N, NewV, RAL) when N > 0 ->
+	replace_(N-1, NewV, RAL).
+
+replace_(N, NewV, [{Size, Tree} | Rest]) when N < Size ->
+	[{Size, replace_tree(Tree, N, NewV, Size)} | Rest];
+replace_(N, NewV, [Keep = {Size, _Tree} | Rest]) ->
+	[Keep | replace_(N - Size, NewV, Rest)].
+
+replace_tree({_OldV, Left, Right}, 0, NewV, _Size) ->
+	{NewV, Left, Right};
+replace_tree({OtherV, Left, Right}, N, NewV, Size) ->
+	SubSize = Size div 2,
+	LorR = (N =< SubSize),
+	if
+		LorR -> {OtherV, replace_tree(Left, N - 1, NewV, SubSize), Right};
+		true -> {OtherV, Left, replace_tree(Right, N - 1 - SubSize, NewV, SubSize)}
+	end;
+replace_tree({_OldV}, 0, NewV, _Size) ->
+	{NewV}.
+
+-ifdef(TEST).
+replace_test_() ->
+	RAList4 = sample_list(),
+	[
+		?t([{1,{x}}] =:= replace(1, x, [{1,{vv}}])),
+		?t([x,b,c,d,e,f,g,h,i,j] =:= to_list(replace(1, x, RAList4))),
+		?t([a,b,c,d,x,f,g,h,i,j] =:= to_list(replace(5, x, RAList4))),
+		?t([a,b,c,d,e,f,g,h,i,x] =:= to_list(replace(10, x, RAList4)))
+	].
+-endif.
