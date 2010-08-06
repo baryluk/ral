@@ -7,6 +7,7 @@
 -export([empty/0, is_empty/1, head/1, nth/2, tail/1, cons/2, length/1, from_list/1]).
 -export([to_list/1, nthtail/2]).
 -export([last/1, foldl/3, foldr/3, map/2, foreach/2, mapfoldl/3, mapfoldr/3, dropwhile/2]).
+-export([foldl_cancelable/3]).
 
 -compile({no_auto_import, [length/1]}).
 
@@ -261,6 +262,32 @@ foldr_test_() ->
 		fold_fun(), 0),
 	general_testing1(F0).
 -endif.
+
+foldl_cancelable(Fun, Acc1, [{_Size, Tree} | Rest]) ->
+	case foldl_cancelable_tree(Fun, Acc1, Tree) of
+		{next, Acc2} ->
+			foldl_cancelable(Fun, Acc2, Rest);
+		{stop, _} = Last2 ->
+			Last2
+	end;
+foldl_cancelable(_Fun, Acc, []) ->
+	Acc.
+
+foldl_cancelable_tree(Fun, Acc1, {V}) ->
+	Fun(V, Acc1);
+foldl_cancelable_tree(Fun, Acc1, {V, Left, Right}) ->
+	case Fun(V, Acc1) of
+		{next, Acc2} ->
+			case foldl_cancelable_tree(Fun, Acc2, Left) of
+				{next, Acc3} ->
+					foldl_cancelable_tree(Fun, Acc3, Right);
+				{stop, _} = Last3 ->
+					Last3
+			end;
+		{stop, _} = Last2 ->
+			Last2
+	end.
+
 
 foreach(Fun, RAL) ->
 	lists:foreach(fun({_Size, Tree}) ->
