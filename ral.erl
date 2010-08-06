@@ -11,6 +11,7 @@
 -export([foldl_cancelable/3]).
 -export([reverse_list/2]).
 -export([replace/3]).
+-export([reverse/1]).
 
 -compile({no_auto_import, [length/1]}).
 
@@ -552,4 +553,24 @@ replace_test_() ->
 		?t([a,b,c,d,x,f,g,h,i,j] =:= to_list(replace(5, x, RAList4))),
 		?t([a,b,c,d,e,f,g,h,i,x] =:= to_list(replace(10, x, RAList4)))
 	].
+-endif.
+
+% O(n)
+% I do not think there is any trick which will make reverse/1, O(log n)
+reverse(InputRAL) ->
+	foldl(fun(V, RAL) ->
+		NewRAL = cons(V, RAL),
+		NewRAL
+	end, empty(), InputRAL).
+
+-ifdef(TEST).
+reverse_test_() ->
+	F0 = fun(RAL, NL) ->
+		RAL_rev1 = reverse(RAL),
+		NL_rev1 = to_list(RAL_rev1),
+		NL_rev2 = lists:reverse(NL),
+		?assert(NL_rev1 =:= NL_rev2),
+		?assert(RAL_rev1 =:= from_list(NL_rev2))
+	end,
+	general_testing1(F0).
 -endif.

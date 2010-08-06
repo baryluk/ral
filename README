@@ -112,6 +112,10 @@ RAList8 = ral:reverse_list([x,y,z], RAList4).
 [a,b,c,d,e,f,g,h,i,x] = ral:to_list(ral:replace(10, x, RAList4)).
 
 
+% reverse/1 is also provided.
+% Its time complexity is O(n)
+% It is only provided for completnes.
+% If you really needs it, this means that in fact you probably need other data structure.
 
 %%%%%% Benchmarks:
 
