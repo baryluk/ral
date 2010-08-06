@@ -2,9 +2,12 @@
 
 
 % Random access lists (ral) is a functional (immutable) data
-% structure which are better both from normal lists, and from balanced binary search trees.
+% structure which are better (in speed) both from normal lists,
+% and from balanced binary search trees.
 
 
+% Time complexity of various basic operations
+%
 % Operation    RAL      List   BST
 %  head        O(1)     O(1)   O(log n)
 %  tail        O(1)     O(1)   O(log n)
