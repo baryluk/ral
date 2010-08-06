@@ -16,20 +16,37 @@
 % for some values it is faster.
 
 
+%%%%% API
+
+
 % O(1)
 RAList = ral:empty(). % it is just [], and will be, you can use it in pattern matching
+
 
 % O(1)
 NewRAList = ral:cons(something, RAList).
 
+
 % O(1)
 something = ral:head(NewRAList).
+
+
+% O(1)
+[] = ral:tail(NewRAList).
+
 
 % O(n)
 RAList2 = ral:from_list([b,c,d,e,f,g,h,i,j]).
 
+
+% O(1)
+RAList2b = ral:tail(RAList2).
+[c,d,e,f,g,h,i,j] = ral:to_list(RAList2b).
+
+
 % O(log n) - worst case
 e = ral:nth(4, RAList2).
+
 
 % O(log n) - worst case
 RAList3 = ral:nthtail(4, RAList2).
@@ -39,12 +56,15 @@ RAList3 = ral:nthtail(4, RAList2).
 % O(log_2 n)
 9 = ral:length(RAList2).
 
+
 % O(1)
 true = ral:is_empty(RAList).
 false = ral:is_empty(NewRAList).
 
+
 % O(1)
 RAList4 = ral:cons(a, RAList2).
+
 
 % O(n) + O(2 * log_2 n) of additional stack space
 [a,b,c,d,e,f,g,h,i,j] = ral:to_list(RAList4).
@@ -53,19 +73,104 @@ RAList4 = ral:cons(a, RAList2).
 % O(2 * log_2 n)
 j = ral:last(RAList4).
 
+
 % O(n)
 % ral:foldl/3, ral:foldr/3, ral:map/2, ral:foreach/2, ral:mapfoldl/3, ral:mapfoldl/3, ral:dropwhile/2
 % all similar like functions in lists:*
 % Note: foldr should be more effective than lists:foldl (will only use O(log n) additional stack space)
 
+
 % O(n)
 RAList6 =  ral:from_list([44,12,16,1,6,6,1,7,9,22,41,5,31]).
 {stop, {9,102}} = ral:foldl_cancelable(fun(Elem, {Pos,Acc}) -> if Acc > 100 -> {stop, {Pos,Acc}}; true -> {next, {Pos+1,Elem+Acc}} end end, {0,0}, RAList6).
 
+
 % there is no filter/2, min/1, max/1, and other function which are not more efficient than just foldl
 
 
-% Internals:
+% there are also from_list_reversed/1, to_list_reversed/1 which are slightly more efficient
+
+RAList7 = ral:from_list_reversed([a,b,c,d,e,f,g,h]).
+h = ral:head(RAList7).
+[j,i,h,g,f,e,d,c,b,a] = ral:to_list_reversed(RAList4)).
+
+
+% there are also reverse_list/2, which prepends elements to current list, similar to lists:reverse/2
+
+RAList8 = ral:reverse_list([x,y,z], RAList4).
+[z,y,x,a,b,c,d,e,f,g,h,i,j] = ral:to_list(RAList8).
+
+
+%%%%%% Benchmarks:
+
+
+L = lists:seq(100,10000).
+RAL = ral:from_list(L).
+
+% 49044 = size(term_to_binary(L)).
+% 68883 = size(term_to_binary(RAL)).
+
+% 20757 = size(term_to_binary(L, [compressed])).
+% 22931 = size(term_to_binary(RAL, [compressed])).
+
+timer:tc(erlang, length, [L]).
+{70, 9901}.
+timer:tc(ral, length, [RAL]).
+{5, 9901}.                                   % <----
+
+timer:tc(erlang, hd, [L]).
+{2, 100}.
+timer:tc(ral, head, [RAL]).
+{3, 100}.
+
+timer:tc(erlang, tl, [L]).
+%{2, ...}.
+timer:tc(ral, tail, [RAL]).
+%{3, ...}.
+
+timer:tc(lists, nth, [30, L]).
+{6,129}.
+timer:tc(ral, nth, [30, RAL]).
+{4,129}.
+
+timer:tc(lists, nth, [3000, L]).
+{151,3099}
+timer:tc(ral, nth, [3000, RAL]).
+{7,3099}                                   % <----
+
+timer:tc(lists, nth, [9000, L]).
+{427,9099}.
+timer:tc(ral, nth, [9000, RAL]).
+{8,9099}.                                   % <----
+
+
+element(1, timer:tc(lists, nthtail, [9000, L])).
+427.
+element(1, timer:tc(ral, nthtail, [9000, RAL])).
+7.                                          % <----
+
+element(1, timer:tc(lists, map, [fun(X) -> 2*X end, L])).
+41000.
+element(1, timer:tc(ral, map, [fun(X) -> 2*X end, RAL])).
+42000.
+
+element(1, timer:tc(lists, foldl, [fun(X,Acc) -> Acc+2*X end, 0, L])).
+86000.
+element(1, timer:tc(ral, foldl, [fun(X,Acc) -> Acc+2*X end, 0, RAL])).
+81000.
+
+
+element(1, timer:tc(lists, foldr, [fun(X,Acc) -> Acc+2*X end, 0, L])).
+97000.
+element(1, timer:tc(ral, foldr, [fun(X,Acc) -> Acc+2*X end, 0, RAL])).
+82000.                                      % <--- slightly faster
+
+
+
+% all iterating function have similar times.
+
+
+%%%%%% Internals:
 
 % let lists:reverse([a,b,c,d,e,f,g]) be a list
 % let convert it to ral element by element:
