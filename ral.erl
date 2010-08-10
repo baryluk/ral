@@ -59,7 +59,7 @@ general_testing2(F0) when is_function(F0, 3) ->
 		NLs).
 -endif.
 
-% random-access-list implementation
+% random-access list implementation
 
 empty() ->
 	[].
@@ -77,7 +77,7 @@ query_test_fun_gen(RAL_QUERY, LIST_QUERY) ->
 
 is_empty([]) ->
 	true;
-is_empty([{_,_}|_]) ->
+is_empty([{_Size, _Tree} | _Rest]) ->
 	false;
 is_empty(_) ->
 	throw(badarg).
@@ -100,8 +100,8 @@ empty_test_() ->
 	general_testing1(F0).
 -endif.
 
-head([{_, Tree} | _Rest]) ->
-	min(Tree).
+head([{_Size, Tree} | _Rest]) ->
+	tree_first(Tree).
 
 -ifdef(TEST).
 head_test_() ->
@@ -123,7 +123,7 @@ nth_(N, [{Size, _Tree} | Rest]) ->
 
 lookup_tree({V, _Left, _Right}, 0, _Size) ->
 	V;
-lookup_tree({_, Left, Right}, N, Size) ->
+lookup_tree({_V, Left, Right}, N, Size) ->
 	SubSize = Size div 2,
 	LorR = (N =< SubSize),
 	if
@@ -170,7 +170,7 @@ tail2_test_() ->
 length(RAL) ->
 	length(0, RAL).
 
-length(Acc, [{Size, _Tree}|Rest]) ->
+length(Acc, [{Size, _Tree} | Rest]) ->
 	length(Acc+Size, Rest);
 length(Acc, []) ->
 	Acc.
@@ -186,14 +186,14 @@ length_test_() ->
 
 
 
-min({V, _Left, _Right}) ->
+tree_first({V, _Left, _Right}) ->
 	V;
-min({V}) ->
+tree_first({V}) ->
 	V.
 
-max({_, _Left, Right}) ->
-	max(Right);
-max({V}) ->
+tree_last({_, _Left, Right}) ->
+	tree_last(Right);
+tree_last({V}) ->
 	V.
 
 cons(V, [{Size, Tree1}, {Size, Tree2} | Rest]) ->
@@ -336,7 +336,7 @@ foreach_tree(Fun, {V, Left, Right}) ->
 
 last(RAL) ->
 	{_Size, LastTree} = lists:last(RAL),
-	max(LastTree).
+	tree_last(LastTree).
 
 -ifdef(TEST).
 last_test_() ->
