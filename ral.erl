@@ -191,7 +191,7 @@ tree_first({V, _Left, _Right}) ->
 tree_first({V}) ->
 	V.
 
-tree_last({_, _Left, Right}) ->
+tree_last({_V, _Left, Right}) ->
 	tree_last(Right);
 tree_last({V}) ->
 	V.
@@ -352,7 +352,8 @@ map(Fun, RAL) ->
 	end, RAL).
 
 map_tree(Fun, {V}) ->
-	{Fun(V)};
+	NewV = Fun(V),
+	{NewV};
 map_tree(Fun, {V, Left, Right}) ->
 	NewV = Fun(V),
 	NewLeft = map_tree(Fun, Left),
