@@ -61,6 +61,15 @@ general_testing2(F0) when is_function(F0, 3) ->
 
 % random-access list implementation
 
+%
+% Note: All functions return badarg, or function_clause exceptions,
+% when something other than real RAL is given to the function where it should be.
+%
+
+%
+% Returns new RAL without any elements.
+% O(1)
+% Note: empty RAL is just [] (empty list)
 empty() ->
 	[].
 
@@ -74,7 +83,10 @@ query_test_fun_gen(RAL_QUERY, LIST_QUERY) ->
 	end.
 -endif.
 
-
+%
+% Returns true or false, depending on whetever there are any elemnts in RAL.
+% O(1)
+% Note: you can use [] as a patter, to check if RAL is empty.
 is_empty([]) ->
 	true;
 is_empty([{_Size, _Tree} | _Rest]) ->
@@ -100,6 +112,11 @@ empty_test_() ->
 	general_testing1(F0).
 -endif.
 
+%
+% Returns first (head) RAL element.
+% It throws badarg exception, if RAL is empty.
+% O(1)
+% Similar to erlang:hd/1
 head([{_Size, Tree} | _Rest]) ->
 	tree_first(Tree).
 
@@ -111,8 +128,13 @@ head_test_() ->
 	general_testing1(F0).
 -endif.
 
-
+%
+% Returns n-th element from RAL counting from head.
+% It throws exception on non existing index element.
+% Counting starts from 1 (so head is element 1).
+% Throws exception, if RAL is empty.
 % O(log n)
+% Similar to lists:nth/2
 nth(N, RAL) when N > 0 ->
 	nth_(N-1, RAL).
 
@@ -146,7 +168,10 @@ nth_test_() ->
 	general_testing2(F0).
 -endif.
 
-
+%
+% Returns RAL without first (head) element.
+% It throws badarg exception, if RAL is empty.
+% Similar to erlang:tl/1
 tail([{Size, {_V, Left, Right}} | Rest]) ->
 	[{Size div 2, Left}, {Size div 2, Right} | Rest];
 tail([{1, {_V}} | Rest]) ->
@@ -166,7 +191,10 @@ tail2_test_() ->
 	general_testing1(F0).
 -endif.
 
-
+%
+% Returns number of elements in the RAL.
+% O(log n)
+% Similar to erlang:length/1
 length(RAL) ->
 	length(0, RAL).
 
@@ -196,6 +224,9 @@ tree_last({_V, _Left, Right}) ->
 tree_last({V}) ->
 	V.
 
+%
+% Constructs new RAL with element V, prepended to given RAL.
+% O(1)
 cons(V, [{Size, Tree1}, {Size, Tree2} | Rest]) ->
 	[{Size+Size+1, {V, Tree1, Tree2}} | Rest];
 cons(V, [ST|Rest]) ->
@@ -203,21 +234,31 @@ cons(V, [ST|Rest]) ->
 cons(V, []) ->
 	[{1, {V}}].
 
+%
+% Constructs RAL from standard list.
+% O(n) - (Note: it performs list reversion internally)
 from_list(NormalList) ->
 	lists:foldl(fun(V, RAL) ->
 		cons(V, RAL)
 	end, empty(), lists:reverse(NormalList)).
 
+%
+% Constructs RAL from standard list but in reversed order.
+% O() - (Note: Faster than from_list/1, as it do not reverse given list.)
 from_list_reversed(NormalList) ->
 	lists:foldl(fun(V, RAL) ->
 		cons(V, RAL)
 	end, empty(), NormalList).
 
-% O(n)
+%
+% Returns standard list from the RAL
+% O(n) - time, O(log n) - additional stack space
 to_list(RAL) ->
 	foldr(fun(E, Acc) -> [E|Acc] end, [], RAL).
 
-% O(n)
+%
+% Same as to_list/1, but returns list reversed.
+% O(n), O(log n) - additional stack space, slightly less than to_list/1
 to_list_reversed(RAL) ->
 	foldl(fun(E, Acc) -> [E|Acc] end, [], RAL).
 
@@ -236,6 +277,7 @@ to_list_test_() ->
 
 % this written explcitly (without lists:foldl usage)
 
+% Similar to lists:foldl/3
 foldl(Fun, Acc1, [{_Size, Tree} | Rest]) ->
 	Acc2 = foldl_tree(Fun, Acc1, Tree),
 	foldl(Fun, Acc2, Rest);
@@ -250,6 +292,7 @@ foldl_tree(Fun, Acc1, {V, Left, Right}) ->
 	Acc4 = foldl_tree(Fun, Acc3, Right),
 	Acc4.
 
+% Similar to lists:foldr/3
 foldr(Fun, Acc0, RAL) ->
 	lists:foldr(fun({_Size, Tree}, Acc) ->
 		foldr_tree(Fun, Acc, Tree)
@@ -292,6 +335,15 @@ foldr_test_() ->
 	general_testing1(F0).
 -endif.
 
+%
+% Iterates over all elements in RAL, with possibility of canceling traversin.g
+%
+% foldl_cancelable(Fun, Acc1, RAL),
+% where Fun is a fun/2, which will be called as Fun(Element, Acc)
+% and should return {next, NewAcc} or {stop, LastAcc}.
+% foldl_cancelable returns last Acc returned from Fun (whetever it was next on last elementm
+% or stop before end.
+
 foldl_cancelable(Fun, Acc1, [{_Size, Tree} | Rest]) ->
 	case foldl_cancelable_tree(Fun, Acc1, Tree) of
 		{next, Acc2} ->
@@ -317,7 +369,7 @@ foldl_cancelable_tree(Fun, Acc1, {V, Left, Right}) ->
 			Last2
 	end.
 
-
+% Similar to lists:foreach/2
 foreach(Fun, RAL) ->
 	lists:foreach(fun({_Size, Tree}) ->
 		foreach_tree(Fun, Tree)
@@ -331,9 +383,12 @@ foreach_tree(Fun, {V, Left, Right}) ->
 	foreach_tree(Fun, Right).
 
 -ifdef(TEST).
-% hot to test foreach?
+% how to test foreach?
 -endif.
 
+% Returns last element (oposite of head) in RAL.
+% O(log n)
+% Smilar to lists:last/1
 last(RAL) ->
 	{_Size, LastTree} = lists:last(RAL),
 	tree_last(LastTree).
@@ -346,6 +401,7 @@ last_test_() ->
 	general_testing1(F0).
 -endif.
 
+% Similar to lists:map/2
 map(Fun, RAL) ->
 	lists:map(fun({Size, Tree}) ->
 		{Size, map_tree(Fun, Tree)}
@@ -381,6 +437,7 @@ map_test_() ->
 	general_testing1(F0).
 -endif.
 
+% Similar to lists:mapfoldl/2
 mapfoldl(Fun, Acc0, RAL) ->
 	lists:mapfoldl(fun({Size, Tree}, Acc) ->
 		{NewTree, Acc1} = mapfoldl_tree(Fun, Acc, Tree),
@@ -397,6 +454,8 @@ mapfoldl_tree(Fun, Acc0, {V, Left, Right}) ->
 	NewTree = {NewV, NewLeft, NewRight},
 	{NewTree, Acc3}.
 
+
+% Similar to lists:mapfoldr/2
 mapfoldr(Fun, Acc0, RAL) ->
 	lists:mapfoldr(fun({Size, Tree}, Acc) ->
 		{NewTree, Acc1} = mapfoldr_tree(Fun, Acc, Tree),
@@ -441,6 +500,7 @@ mapfoldr_test_() ->
 -endif.
 
 
+% Similar to lists:nthtail/2
 nthtail(0, RAL) ->
 	RAL;
 nthtail(N, [{Size, _Tree} | Rest]) when N > Size ->
@@ -480,7 +540,7 @@ nthtail_test_() ->
 	general_testing2(F0).
 -endif.
 
-
+% Similar to lists:dropwhile/2
 dropwhile(Pred, []) when is_function(Pred, 1) ->
 	[];
 dropwhile(Pred, RAL) ->
@@ -503,6 +563,8 @@ dropwhile_test_() ->
 -endif.
 
 
+% Similar to lists:reverse/2, but
+% first argument is a standard list, and second argument (tail) is a RAL.
 reverse_list([H|T], RAL) ->
 	reverse_list(T, cons(H, RAL));
 reverse_list([], RAL) ->
@@ -524,6 +586,8 @@ reverse_list_test_() ->
 
 % like nth/2, just add 3,4-rd parameter for new value, and return new trees, instad of value
 
+% Return new RAL with n-th element replaced with NewV.
+% Counting and errors like in nth/2.
 % O(log n)
 replace(N, NewV, RAL) when N > 0 ->
 	replace_(N-1, NewV, RAL).
@@ -556,6 +620,8 @@ replace_test_() ->
 	].
 -endif.
 
+% Returns new RAL with elements in reversed order.
+% Note: not very efficient.
 % O(n)
 % I do not think there is any trick which will make reverse/1, O(log n)
 reverse(InputRAL) ->
